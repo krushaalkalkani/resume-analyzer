@@ -1,8 +1,6 @@
 streamlit
-numpy
 pandas
-nltk
 scikit-learn
-xgboost
 joblib
-matplotlib
+pdfplumber
+numpy

@@ -69,3 +69,12 @@ htmlcov/
 *.pkl
 *.npy
 
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+data/Resume.csv
+tfidf_matrix.npz
+explore.py
+train.py

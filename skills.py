@@ -30,6 +30,37 @@ SKILL_DATABASE = {
     ]
 }
 
+JUNK_WORDS = {
+    'years', 'experience', 'work', 'company', 'team', 'using', 'new',
+    'also', 'including', 'within', 'able', 'various', 'one', 'two',
+    'three', 'skills', 'ability', 'role', 'job', 'position', 'time',
+    'well', 'strong', 'good', 'excellent', 'etc', 'day', 'month', 'year'
+}
+
+
+def get_top_words(category, n=30):
+    category_data = dataset[dataset['Category'] == category]
+    combined_text = ' '.join(category_data['cleaned_resume'].astype(str))
+    words = combined_text.split()
+    words = [word for word in words if word.lower() not in ENGLISH_STOP_WORDS]
+    top_words = Counter(words).most_common(n)
+    return top_words
+
+
+def get_skills_for_category(category, n=15):
+    if category in SKILL_DATABASE:
+        return SKILL_DATABASE[category]
+    else:
+        top_words = get_top_words(category, n * 3)
+        top_words = [
+            word for word, count in top_words
+            if word not in ENGLISH_STOP_WORDS
+            and word not in JUNK_WORDS
+            and len(word) >= 4
+        ]
+        return top_words[:n]
+
+
 # # filter row by category
 # finance = dataset[dataset['Category'] == 'FINANCE']
 # # Combine all resume text from that category into one big string
@@ -45,14 +76,6 @@ SKILL_DATABASE = {
 # # print(f"Unique words in FINANCE category: {len(set(finance_words))}")
 
 
-def get_top_words(category, n=30):
-    category_data = dataset[dataset['Category'] == category]
-    combined_text = ' '.join(category_data['cleaned_resume'].astype(str))
-    words = combined_text.split()
-    words = [word for word in words if word.lower() not in ENGLISH_STOP_WORDS]
-    top_words = Counter(words).most_common(n)
-    return top_words
-
 # skill extractor
 # if "financial reporting" in "this is a resume mentioning financial reporting and more":
     # True!
@@ -61,7 +84,7 @@ def get_top_words(category, n=30):
 
 
 def extract_skills(resume_text, category):
-    skills = SKILL_DATABASE.get(category, [])
+    skills = get_skills_for_category(category)
     found_skills = []
     for skill in skills:
         pattern = r'\b' + re.escape(skill) + r'\b'
@@ -71,7 +94,7 @@ def extract_skills(resume_text, category):
 
 
 def find_missing_skills(user_skills, category):
-    category_skills = SKILL_DATABASE.get(category, [])
+    category_skills = get_skills_for_category(category)
     user_skill_set = {skill.lower() for skill in user_skills}
     missing_skills = [
         skill for skill in category_skills if skill not in user_skill_set]
@@ -94,32 +117,9 @@ def analyze_resume(resume_text):
 # top_words = Counter(finance_words).most_common(30)
 # print(top_words)
 if __name__ == "__main__":
-    print(get_top_words('FINANCE', 10))
-
-    sample_resume = "experienced finance professional skilled in accounting, payroll, and financial reporting. proficient in excel and budgeting."
-    extracted_finance = extract_skills(sample_resume, 'FINANCE')
-    print("Extracted FINANCE skills:", extracted_finance)
-    print("Missing FINANCE skills:", find_missing_skills(
-        extracted_finance, 'FINANCE'))
-
-    tricky = "i have excellent communication skills and i excelled in my role as a manager"
-    print("Test 2:", extract_skills(tricky, 'FINANCE'))
-
-    sample_it_resume = "it engineer with python, sql, git, and docker experience in cloud computing"
-    extracted_it = extract_skills(sample_it_resume, 'INFORMATION-TECHNOLOGY')
-    print("Extracted INFORMATION-TECHNOLOGY skills:", extracted_it)
-    print("Missing INFORMATION-TECHNOLOGY skills:",
-          find_missing_skills(extracted_it, 'INFORMATION-TECHNOLOGY'))
-
-print("Missing INFORMATION-TECHNOLOGY skills:",
-      find_missing_skills(extracted_it, 'INFORMATION-TECHNOLOGY'))
-print("\n--- End-to-End Test ---")
-real_resume = """
-    Finance professional with 8 years of experience in financial analysis, 
-    accounting, and payroll management. Proficient in excel, financial reporting,
-    and cash flow analysis. Expert in general ledger reconciliation and auditing.
-    """
-result = analyze_resume(real_resume)
-print("Predicted category:", result['predicted_category'])
-print("Skills found:", result['skills_found'])
-print("Skills missing:", result['skills_missing'])
+    # Test with a real finance resume
+    real_resume = "Finance professional with 8 years of experience in financial analysis, accounting, and payroll management. Proficient in excel and financial reporting."
+    result = analyze_resume(real_resume)
+    print("Predicted category:", result['predicted_category'])
+    print("Skills found:", result['skills_found'])
+    print("Skills missing:", result['skills_missing'])
