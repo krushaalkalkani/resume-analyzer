@@ -42,16 +42,11 @@ wheels/
 *.ipynb
 
 # Data
-data/
 *.xlsx
-*.json
 datasets/
 
 # Models
-*.pickle
 *.h5
-*.joblib
-models/
 
 # Logs
 logs/
@@ -66,15 +61,9 @@ Thumbs.db
 .coverage
 htmlcov/
 
-*.pkl
-*.npy
-
 venv/
 __pycache__/
 *.pyc
 .DS_Store
 .vscode/
 data/Resume.csv
-tfidf_matrix.npz
-explore.py
-train.py

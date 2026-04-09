@@ -1,6 +1,4 @@
-import pandas as pd
-from collections import Counter
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+import json
 import re
 import joblib
 from preprocess import clean_text
@@ -9,7 +7,8 @@ model = joblib.load('model.pkl')
 tfidf = joblib.load('tfidf.pkl')
 label_encoder = joblib.load('label_encoder.pkl')
 
-dataset = pd.read_csv('data/cleaned_resume.csv')
+with open('category_cache.json', 'r', encoding='utf-8') as f:
+    CATEGORY_CACHE = json.load(f)
 
 # create skill database
 
@@ -30,35 +29,11 @@ SKILL_DATABASE = {
     ]
 }
 
-JUNK_WORDS = {
-    'years', 'experience', 'work', 'company', 'team', 'using', 'new',
-    'also', 'including', 'within', 'able', 'various', 'one', 'two',
-    'three', 'skills', 'ability', 'role', 'job', 'position', 'time',
-    'well', 'strong', 'good', 'excellent', 'etc', 'day', 'month', 'year'
-}
-
-
-def get_top_words(category, n=30):
-    category_data = dataset[dataset['Category'] == category]
-    combined_text = ' '.join(category_data['cleaned_resume'].astype(str))
-    words = combined_text.split()
-    words = [word for word in words if word.lower() not in ENGLISH_STOP_WORDS]
-    top_words = Counter(words).most_common(n)
-    return top_words
-
 
 def get_skills_for_category(category, n=15):
     if category in SKILL_DATABASE:
         return SKILL_DATABASE[category]
-    else:
-        top_words = get_top_words(category, n * 3)
-        top_words = [
-            word for word, count in top_words
-            if word not in ENGLISH_STOP_WORDS
-            and word not in JUNK_WORDS
-            and len(word) >= 4
-        ]
-        return top_words[:n]
+    return CATEGORY_CACHE[category][:n]
 
 
 # # filter row by category
@@ -114,8 +89,6 @@ def analyze_resume(resume_text):
     }
 
 
-# top_words = Counter(finance_words).most_common(30)
-# print(top_words)
 if __name__ == "__main__":
     # Test with a real finance resume
     real_resume = "Finance professional with 8 years of experience in financial analysis, accounting, and payroll management. Proficient in excel and financial reporting."
